@@ -1,0 +1,53 @@
+�&defVar --name arquivoTexto --type String
+defVar --name challenge --type String
+defVar --name arquivoExcel --type Excel
+defVar --name tabelaExcel --type DataTable
+defVar --name linhas --type Numeric
+defVar --name colunas --type Numeric
+defVar --name count --type Numeric
+defVar --name firstName --type String --parameter 
+defVar --name lastName --type String --parameter 
+defVar --name companyName --type String --parameter 
+defVar --name roleInCompany --type String --parameter 
+defVar --name address --type String --parameter 
+defVar --name email --type String --parameter 
+defVar --name phoneNumber --type String --parameter 
+defVar --name firstNameNull --type Boolean
+defVar --name navegador --type Browser
+defVar --name resultado --type String
+defVar --name desktop --type String
+defVar --name challengeFilePath --type String
+defVar --name file --type String
+defVar --name success --type Boolean
+//#Setando o conteúdo da tabela em Base64 para criar o arquivo challenge.xlsx
+getSpecialFolder --folder "Desktop" desktop=value
+setVar --name "${challengeFilePath}" --value "${desktop}\\challenge.xlsx"
+
+//#Iniciando instância do navegador e indo para o link
+webStart --name web01 --type "Chrome" navegador=value
+webNavigate --url "http://www.rpachallenge.com/assets/downloadFiles/challenge.xlsx"
+webWaitDownload --extension ".xlsx" file=filename success=success
+fileRename --file "${file}" --newname "challenge.xlsx" challengeFilePath=value
+webNavigate --url "http://www.rpachallenge.com/"
+webClick --selector "XPath" --xpath "/html/body/app-root/div[2]/app-rpa1/div/div[1]/div[6]/button"
+
+//#Mapeando a tabela e adicionando nas fields do site
+excelOpen --file "${challengeFilePath}" arquivoExcel=value
+excelGetTable --file ${arquivoExcel} --getfirstsheet  --entiretable  --hasheaders  tabelaExcel=value linhas=rows colunas=columns
+for --variable ${count} --from 1 --to ${tabelaExcel.Rows} --step 1
+	mapTableRow --dataTable ${tabelaExcel} --row ${count} --mappings "number=1=${firstName},number=2=${lastName},number=3=${companyName},number=4=${roleInCompany},number=5=${address},number=6=${email},number=7=${phoneNumber}"
+	textNullOrEmpty --text "${firstName}" firstNameNull=value
+	if --left "${firstNameNull}" --operator "Is_True"
+		continue
+	endIf
+	webExecuteJavaScript --script "try{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"First Name\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${firstName}\"\r\n            i = 0;\r\n            break;\r\n         }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Last Name\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${lastName}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Phone Number\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${phoneNumber}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Company Name\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${companyName}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Role in Company\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${roleInCompany}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Address\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${address}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ntry{\r\n    i = 0\r\n    do{\r\n        if(document.getElementsByTagName(\"label\")[i].innerText == \"Email\"){\r\n            document.getElementsByTagName(\"input\")[i].value = \"${email}\"\r\n            break;\r\n        }\r\n        i++\r\n    }while(true)\r\n}catch(e){}\r\n\r\ndocument.querySelector(\"body > app-root > div.body.row1.scroll-y > app-rpa1 > div > div.inputFields.col.s6.m6.l6 > form > input\").click()"
+next
+
+//#Pegando o resultado do tempo de execução
+webGet --selector "XPath" --xpath "/html/body/app-root/div[2]/app-rpa1/div/div[2]/div[2]" resultado=value
+messageBox --title Resultado --text "Resultado: ${resultado}" --icon "Information" --buttons "OK" --defaultbutton "FirstButton"
+
+webClose --name web01 --leavebrowseropen 
+
+//#Excluindo arquivo 
+fileDelete --file "${challengeFilePath}"*	20.12.4.0
